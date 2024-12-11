@@ -8,10 +8,15 @@ namespace TreeFractal2
     {
         public List<Tree> trees = new List<Tree>();
         [Header("Debug Drawer Settings")]
-        public bool drawBranches = true;
+        public bool drawBranchPoints = true;
+        public Color gizmoPointColor = Color.green;
         public bool drawLines = true;
+        public Color gizmoLineColor = Color.white;
+        public bool drawLeaves = true;
+        public Color gizmoLeafColor = Color.green;
         public bool drawVertices = false;
-        public float branchScale = 1;
+        public float branchPointScale = 1;
+        public float leafScale = 1;
         [Header("Tree Generation Settings")]
         public int maxGenerationDistance = 10;
         public float maxRotationOffset = 10;
@@ -46,25 +51,32 @@ namespace TreeFractal2
         {
             foreach (var tree in trees)
             {
-                if (drawBranches)
+                if (drawBranchPoints)
                 {
                     // Draw the tree as branches in the scene for visualization
                     foreach (var point in tree.branches)
                     {
-                        Gizmos.color = Color.green;
-                        Gizmos.DrawSphere(point.position, point.width * branchScale); // Scale down the sphere size
+                        Gizmos.color = gizmoPointColor;
+                        Gizmos.DrawSphere(point.position, point.width * branchPointScale); // Scale down the sphere size
                     }
                 }
 
-                if (drawLines)
+                if (drawLines || drawLeaves)
                 {
                     // Connect branches with lines
-                    Gizmos.color = Color.white;
                     foreach (var point in tree.branches)
                     {
-                        if (point.parent != null)
+                        if (point.parent != null && drawLines)
                         {
+                            Gizmos.color = gizmoLineColor;
                             Gizmos.DrawLine(point.position, point.parent.position);
+                        }
+
+                        // Draw leaves
+                        if (point.children.Count == 0 && drawLeaves)
+                        {
+                            Gizmos.color = gizmoLeafColor;
+                            Gizmos.DrawCube(point.position, point.width * leafScale * Vector3.one);
                         }
                     }
                 }
