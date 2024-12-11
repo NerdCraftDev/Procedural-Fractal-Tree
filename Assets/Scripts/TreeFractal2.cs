@@ -130,50 +130,56 @@ namespace TreeFractal2
             isGrowing = false;
         }
 
-        private void GrowTree(Tree tree)
+        private async void GrowTree(Tree tree)
         {
             List<BranchData> newBranches = new List<BranchData>();
 
             // Perform calculations without Unity API calls
-            foreach (var point in tree.branches)
+            await Task.Run(() =>
             {
-                // Increase the length and width of each branch by 5%
-                point.length *= 1 + tree.percentLengthIncrease;
-                point.width *= 1 + tree.percentWidthIncrease;
+                Parallel.ForEach(tree.branches, point =>
+                {
+                    // Increase the length and width of each branch by 5%
+                    point.length *= 1 + tree.percentLengthIncrease;
+                    point.width *= 1 + tree.percentWidthIncrease;
 
-                // Update the position of the branch based on the new length
-                if (point.parent != null)
-                {
-                    point.position = point.parent.position + point.parent.direction * point.parent.length;
-                }
-
-                // Check if the branch should add new branches
-                float combinedChildrenWidth = 0;
-                foreach (var child in point.children)
-                {
-                    combinedChildrenWidth += child.width;
-                }
-                if (point.width > (1 + tree.extraWidthPercentToBranch) * combinedChildrenWidth)
-                {
-                    // Collect data for new branches
-                    newBranches.Add(new BranchData
+                    // Update the position of the branch based on the new length
+                    if (point.parent != null)
                     {
-                        parent = point,
-                        direction = Vector3.zero, // Temporary value, will be set on the main thread
-                        width = point.width * 0.75f,
-                        length = point.length * 0.75f
-                    });
-                }
-            }
+                        point.position = point.parent.position + point.parent.direction * point.parent.length;
+                    }
+
+                    // Check if the branch should add new branches
+                    float combinedChildrenWidth = 0;
+                    foreach (var child in point.children)
+                    {
+                        combinedChildrenWidth += child.width;
+                    }
+                    if (point.width > (1 + tree.extraWidthPercentToBranch) * combinedChildrenWidth)
+                    {
+                        // Collect data for new branches
+                        newBranches.Add(new BranchData
+                        {
+                            parent = point,
+                            direction = Vector3.zero, // Temporary value, will be set on the main thread
+                            width = point.width * 0.75f,
+                            length = point.length * 0.75f
+                        });
+                    }
+                });
+            });
 
             // Apply changes to Unity objects on the main thread
             UnityMainThreadDispatcher.Enqueue(() =>
             {
-                foreach (var data in newBranches)
+            foreach (var data in newBranches)
+            {
+                if (data != null)
                 {
                     data.direction = Tree.GetOffsetDirection(data.parent.direction, maxRotationOffset);
                     tree.AddBranch(data.parent, data.direction, data.width, data.length);
                 }
+            }
             });
         }
 
