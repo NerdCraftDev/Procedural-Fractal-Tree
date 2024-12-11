@@ -15,6 +15,7 @@ namespace TreeFractal2
         public bool drawLeaves = true;
         public Color gizmoLeafColor = Color.green;
         public bool drawVertices = false;
+        public Color gizmoVertexColor = Color.red;
         public float branchPointScale = 1;
         public float leafScale = 1;
         [Header("Tree Generation Settings")]
@@ -24,6 +25,7 @@ namespace TreeFractal2
         public float percentLengthIncrease = 0.05f;
         public float percentWidthIncrease = 0.05f;
         public float randomGrowthFactor = 0.1f;
+        public static int branchVertexCount = 4;
 
         private bool isGrowing = false;
 
@@ -61,7 +63,7 @@ namespace TreeFractal2
                     }
                 }
 
-                if (drawLines || drawLeaves)
+                if (drawLines || drawLeaves || drawVertices)
                 {
                     // Connect branches with lines
                     foreach (var point in tree.branches)
@@ -77,6 +79,16 @@ namespace TreeFractal2
                         {
                             Gizmos.color = gizmoLeafColor;
                             Gizmos.DrawCube(point.position, point.width * leafScale * Vector3.one);
+                        }
+
+                        // Draw vertices
+                        if (drawVertices)
+                        {
+                            Gizmos.color = gizmoVertexColor;
+                            foreach (var vertex in point.vertices)
+                            {
+                                Gizmos.DrawSphere(vertex, 0.1f);
+                            }
                         }
                     }
                 }
@@ -130,45 +142,41 @@ namespace TreeFractal2
             isGrowing = false;
         }
 
-        private async void GrowTree(Tree tree)
+        private void GrowTree(Tree tree)
         {
             List<BranchData> newBranches = new List<BranchData>();
 
             // Perform calculations without Unity API calls
-            await Task.Run(() =>
-            {
-                Parallel.ForEach(tree.branches, point =>
+            foreach (var point in tree.branches) {
+                // Increase the length and width of each branch by 5%
+                point.length *= 1 + tree.percentLengthIncrease;
+                point.width *= 1 + tree.percentWidthIncrease;
+
+                // Update the position of the branch based on the new length
+                if (point.parent != null)
                 {
-                    // Increase the length and width of each branch by 5%
-                    point.length *= 1 + tree.percentLengthIncrease;
-                    point.width *= 1 + tree.percentWidthIncrease;
+                    point.position = point.parent.position + point.parent.direction * point.parent.length;
+                }
 
-                    // Update the position of the branch based on the new length
-                    if (point.parent != null)
+                // Check if the branch should add new branches
+                float combinedChildrenWidth = 0;
+                foreach (var child in point.children)
+                {
+                    combinedChildrenWidth += child.width;
+                }
+                if (point.width > (1 + tree.extraWidthPercentToBranch) * combinedChildrenWidth)
+                {
+                    // Collect data for new branches
+                    newBranches.Add(new BranchData
                     {
-                        point.position = point.parent.position + point.parent.direction * point.parent.length;
-                    }
-
-                    // Check if the branch should add new branches
-                    float combinedChildrenWidth = 0;
-                    foreach (var child in point.children)
-                    {
-                        combinedChildrenWidth += child.width;
-                    }
-                    if (point.width > (1 + tree.extraWidthPercentToBranch) * combinedChildrenWidth)
-                    {
-                        // Collect data for new branches
-                        newBranches.Add(new BranchData
-                        {
-                            parent = point,
-                            direction = Vector3.zero, // Temporary value, will be set on the main thread
-                            width = point.width * 0.75f,
-                            length = point.length * 0.75f
-                        });
-                    }
-                });
-            });
-
+                        parent = point,
+                        direction = Vector3.zero, // Temporary value, will be set on the main thread
+                        width = point.width * 0.75f,
+                        length = point.length * 0.75f
+                    });
+                }
+                point.UpdateVertices();
+            }
             // Apply changes to Unity objects on the main thread
             UnityMainThreadDispatcher.Enqueue(() =>
             {
@@ -254,6 +262,7 @@ namespace TreeFractal2
         public Vector3 direction = Vector3.up;
         public Branch parent;
         public List<Branch> children = new List<Branch>();
+        public Vector3[] vertices;
 
         public Branch(Tree tree, Branch parent, Vector3 direction, float width, float length)
         {
@@ -262,12 +271,28 @@ namespace TreeFractal2
             this.width = width;         // Set the width of this branch
             this.length = length;       // Set the length of this branch
             this.direction = direction; // Set the direction of this branch
-            position = parent != null ? parent.position + parent.direction * parent.length : tree.position; // Calculate the position
+            position = parent != null ? parent.position + parent.direction * parent.length : tree.position; // Calculate the position of this branch
+            vertices = GetVertexPositions(position, direction, width); // Calculate the vertices of this branch
 
-            if (parent != null)
+            parent?.children.Add(this); // Add this branch to the parent's children
+        }
+
+        // Get the vertex positions of the branch
+        public Vector3[] GetVertexPositions(Vector3 position, Vector3 direction, float width)
+        {
+            Vector3[] vertices = new Vector3[TreeFractal2.branchVertexCount];
+            for (int i = 0; i < TreeFractal2.branchVertexCount; i++)
             {
-                parent.children.Add(this); // Add this branch to the parent's children
+                float angle = i * 360f / TreeFractal2.branchVertexCount;
+                Vector3 offset = Quaternion.Euler(0, angle, 0) * Vector3.forward * width;
+                vertices[i] = position + offset;
             }
+            return vertices;
+        }
+
+        public void UpdateVertices()
+        {
+            vertices = GetVertexPositions(position, direction, width);
         }
     }
 
