@@ -1,6 +1,7 @@
 using System.Collections.Generic;
 using UnityEngine;
 using System.Threading.Tasks;
+using TreeEditor;
 
 namespace TreeFractal2
 {
@@ -26,6 +27,7 @@ namespace TreeFractal2
         public float percentWidthIncrease = 0.05f;
         public float randomGrowthFactor = 0.1f;
         public static int branchVertexCount = 4;
+        public Material treeMaterial;
 
         private bool isGrowing = false;
 
@@ -177,17 +179,19 @@ namespace TreeFractal2
                 }
                 point.UpdateVertices();
             }
+
             // Apply changes to Unity objects on the main thread
             UnityMainThreadDispatcher.Enqueue(() =>
             {
-            foreach (var data in newBranches)
-            {
-                if (data != null)
+                foreach (var data in newBranches)
                 {
-                    data.direction = Tree.GetOffsetDirection(data.parent.direction, maxRotationOffset);
-                    tree.AddBranch(data.parent, data.direction, data.width, data.length);
+                    if (data != null)
+                    {
+                        data.direction = Tree.GetOffsetDirection(data.parent.direction, maxRotationOffset);
+                        tree.AddBranch(data.parent, data.direction, data.width, data.length);
+                    }
                 }
-            }
+                tree.UpdateMesh(); // Update the tree's mesh after all branches are added
             });
         }
 
@@ -203,7 +207,9 @@ namespace TreeFractal2
         public Tree CreateTree(Vector3 position, Vector3 trunkNormal)
         {
             float[] growthData = GetGrowthData();
-            return new Tree(position, trunkNormal, maxRotationOffset, growthData[0], growthData[1], growthData[2]);
+            Tree tree = new Tree(position, trunkNormal, maxRotationOffset, growthData[0], growthData[1], growthData[2], treeMaterial);
+            tree.gameObject.transform.SetParent(transform);
+            return tree;
         }
 
         public float[] GetGrowthData()
@@ -224,13 +230,19 @@ namespace TreeFractal2
         public float extraWidthPercentToBranch;
         public float percentLengthIncrease;
         public float percentWidthIncrease;
+        public GameObject gameObject;
 
-        public Tree(Vector3 position, Vector3 trunkNormal, float maxRotationOffset, float extraWidthPercentToBranch, float percentLengthIncrease, float percentWidthIncrease)
+        public Tree(Vector3 position, Vector3 trunkNormal, float maxRotationOffset, float extraWidthPercentToBranch, float percentLengthIncrease, float percentWidthIncrease, Material treeMaterial)
         {
             this.position = position;
             this.extraWidthPercentToBranch = extraWidthPercentToBranch;
             this.percentLengthIncrease = percentLengthIncrease;
             this.percentWidthIncrease = percentWidthIncrease;
+            this.gameObject = new GameObject("Tree");
+            gameObject.AddComponent<MeshFilter>();
+            gameObject.AddComponent<MeshRenderer>();
+            gameObject.GetComponent<MeshRenderer>().material = treeMaterial;
+            
             // Create tree trunk
             branches.Add(new Branch(this, null, trunkNormal, 1, 5));
             branches.Add(new Branch(this, branches[0], GetOffsetDirection(branches[0].direction, maxRotationOffset), 0.75f, 5f));
@@ -250,6 +262,52 @@ namespace TreeFractal2
         {
             var branch = new Branch(this, parent, direction, width, length);
             branches.Add(branch);
+        }
+
+        public void UpdateMesh()
+        {
+            var vertices = new List<Vector3>();
+            var triangles = new List<int>();
+
+            foreach (var branch in branches)
+            {
+                vertices.AddRange(branch.vertices);
+                if (branch.parent != null)
+                {
+                    triangles.AddRange(GenerateTriangles(branch.vertices, branch.parent.vertices));
+                }
+            }
+
+            Mesh mesh = gameObject.GetComponent<MeshFilter>().mesh;
+            mesh.vertices = vertices.ToArray();
+            mesh.triangles = triangles.ToArray();
+            mesh.RecalculateNormals();
+            mesh.RecalculateBounds();
+        }
+
+        public int[] GenerateTriangles(Vector3[] vertices, Vector3[] parentVertices)
+        {
+            List<int> triangles = new List<int>();
+
+            if (parentVertices != null)
+            {
+                for (int i = 0; i < vertices.Length; i++)
+                {
+                    int nextIndex = (i + 1) % vertices.Length;
+
+                    // Triangle 1: current vertex, current parent vertex, next vertex
+                    triangles.Add(i);
+                    triangles.Add(nextIndex);
+                    triangles.Add(i + vertices.Length);
+
+                    // Triangle 2: next vertex, current parent vertex, next parent vertex
+                    triangles.Add(nextIndex);
+                    triangles.Add(nextIndex + vertices.Length);
+                    triangles.Add(i + vertices.Length);
+                }
+            }
+
+            return triangles.ToArray();
         }
     }
 
@@ -281,11 +339,12 @@ namespace TreeFractal2
         public Vector3[] GetVertexPositions(Vector3 position, Vector3 direction, float width)
         {
             Vector3[] vertices = new Vector3[TreeFractal2.branchVertexCount];
+            Vector3 perpendicular = Vector3.Cross(direction, direction == Vector3.up ? Vector3.right : Vector3.up).normalized * width;
             for (int i = 0; i < TreeFractal2.branchVertexCount; i++)
             {
                 float angle = i * 360f / TreeFractal2.branchVertexCount;
-                Vector3 offset = Quaternion.Euler(0, angle, 0) * Vector3.forward * width;
-                vertices[i] = position + offset;
+                Quaternion rotation = Quaternion.AngleAxis(angle, direction);
+                vertices[i] = position + rotation * perpendicular;
             }
             return vertices;
         }
