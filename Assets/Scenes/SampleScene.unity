@@ -285,13 +285,13 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: 9d81d63a5167ae1499376437cd20cc22, type: 3}
   m_Name: 
   m_EditorClassIdentifier: 
-  drawBranchPoints: 0
+  drawBranchPoints: 1
   gizmoPointColor: {r: 1, g: 0.75357664, b: 0, a: 1}
-  drawLines: 1
+  drawLines: 0
   gizmoLineColor: {r: 0.16862746, g: 0.09803922, b: 0.023529412, a: 1}
-  drawLeaves: 1
+  drawLeaves: 0
   gizmoLeafColor: {r: 0, g: 0.4627451, b: 0, a: 1}
-  drawVertices: 0
+  drawVertices: 1
   gizmoVertexColor: {r: 1, g: 0, b: 0, a: 1}
   branchPointScale: 1
   leafScale: 10

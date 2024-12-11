@@ -268,43 +268,51 @@ namespace TreeFractal2
         {
             var vertices = new List<Vector3>();
             var triangles = new List<int>();
-
+            
+            // First collect all vertices
             foreach (var branch in branches)
             {
                 vertices.AddRange(branch.vertices);
+            }
+
+            // Then generate triangles with correct index offsets
+            for (int i = 0; i < branches.Count; i++)
+            {
+                var branch = branches[i];
                 if (branch.parent != null)
                 {
-                    triangles.AddRange(GenerateTriangles(branch.vertices, branch.parent.vertices));
+                    int branchStartIndex = i * TreeFractal2.branchVertexCount;
+                    int parentIndex = branches.IndexOf(branch.parent) * TreeFractal2.branchVertexCount;
+                    
+                    triangles.AddRange(GenerateTriangles(branchStartIndex, parentIndex, TreeFractal2.branchVertexCount));
                 }
             }
 
             Mesh mesh = gameObject.GetComponent<MeshFilter>().mesh;
+            mesh.Clear();
             mesh.vertices = vertices.ToArray();
             mesh.triangles = triangles.ToArray();
             mesh.RecalculateNormals();
             mesh.RecalculateBounds();
         }
 
-        public int[] GenerateTriangles(Vector3[] vertices, Vector3[] parentVertices)
+        private int[] GenerateTriangles(int branchStartIndex, int parentStartIndex, int vertexCount)
         {
             List<int> triangles = new List<int>();
 
-            if (parentVertices != null)
+            for (int i = 0; i < vertexCount; i++)
             {
-                for (int i = 0; i < vertices.Length; i++)
-                {
-                    int nextIndex = (i + 1) % vertices.Length;
+                int nextI = (i + 1) % vertexCount;
 
-                    // Triangle 1: current vertex, current parent vertex, next vertex
-                    triangles.Add(i);
-                    triangles.Add(nextIndex);
-                    triangles.Add(i + vertices.Length);
+                // First triangle (reversed winding order)
+                triangles.Add(branchStartIndex + i);
+                triangles.Add(parentStartIndex + i);
+                triangles.Add(branchStartIndex + nextI);
 
-                    // Triangle 2: next vertex, current parent vertex, next parent vertex
-                    triangles.Add(nextIndex);
-                    triangles.Add(nextIndex + vertices.Length);
-                    triangles.Add(i + vertices.Length);
-                }
+                // Second triangle (reversed winding order)
+                triangles.Add(branchStartIndex + nextI);
+                triangles.Add(parentStartIndex + i);
+                triangles.Add(parentStartIndex + nextI);
             }
 
             return triangles.ToArray();
