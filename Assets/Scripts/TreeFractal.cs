@@ -416,6 +416,10 @@ public class TreeFractalEditor : Editor
 
         TreeFractal treeFractal = (TreeFractal)target;
 
+        // Header for the tree generation section
+        GUILayout.Space(10);
+        GUILayout.Label("Tree Generation Controls", EditorStyles.boldLabel);
+
         // Dropdown for selecting a tree
         string[] treeOptions = new string[treeFractal.trees.Count];
         for (int i = 0; i < treeOptions.Length; i++)

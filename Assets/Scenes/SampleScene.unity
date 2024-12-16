@@ -289,18 +289,18 @@ MonoBehaviour:
   gizmoPointColor: {r: 1, g: 0.75357664, b: 0, a: 1}
   drawLines: 1
   gizmoLineColor: {r: 0.16862746, g: 0.09803922, b: 0.023529412, a: 1}
-  drawLeaves: 1
+  drawLeaves: 0
   gizmoLeafColor: {r: 0, g: 0.4627451, b: 0, a: 1}
   drawVertices: 0
   gizmoVertexColor: {r: 1, g: 0, b: 0, a: 1}
   branchPointScale: 1
-  leafScale: 10
+  leafScale: 1
   maxGenerationDistance: 250
   maxRotationOffset: 25
   extraWidthPercentToBranch: 0.25
   percentLengthIncrease: 0.05
   percentWidthIncrease: 0.05
-  randomGrowthFactor: 0.8
+  randomGrowthFactor: 0.5
 --- !u!4 &332909720
 Transform:
   m_ObjectHideFlags: 0
@@ -654,7 +654,7 @@ GameObject:
   - component: {fileID: 1792702902}
   - component: {fileID: 1792702901}
   m_Layer: 0
-  m_Name: TreeFractalGenerator
+  m_Name: TreeFractalGenerator1
   m_TagString: Untagged
   m_Icon: {fileID: 0}
   m_NavMeshLayer: 0
@@ -684,7 +684,7 @@ MonoBehaviour:
   angleIncreasePerDepth: 10
   verticesCount: 8
   leafMaterial: {fileID: 2100000, guid: 213c4efbbfec57442ae3a28da2a57e8f, type: 2}
-  maxGenerationDistance: 25
+  maxGenerationDistance: 50
   minDepth: 3
   maxDepth: 8
   iterationDelay: 0
@@ -843,8 +843,8 @@ SceneRoots:
   - {fileID: 330585546}
   - {fileID: 410087041}
   - {fileID: 832575519}
-  - {fileID: 1792702902}
   - {fileID: 1022328289}
   - {fileID: 2068356793}
+  - {fileID: 1792702902}
   - {fileID: 332909720}
   - {fileID: 1349986222}
