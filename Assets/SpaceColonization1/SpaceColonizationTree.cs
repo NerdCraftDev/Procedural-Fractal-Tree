@@ -10,14 +10,14 @@ public class SpaceColonizationTree : MonoBehaviour
     public List<Vector2> points = new List<Vector2>();
     public Texture2D heatmap;
 
-    void Start()
+    async void Start()
     {
         points.Add(new Vector2(128, 128));
         points.Add(new Vector2(64, 64));
         points.Add(new Vector2(192, 192));
         points.Add(new Vector2(64, 192));
         points.Add(new Vector2(192, 64));
-        heatmap = GenerateHeatmap(points, mapWidth, mapHeight, falloff);
+        heatmap = await GenerateHeatmap(points, mapWidth, mapHeight, falloff);
         SaveTexture(heatmap);
     }
 
@@ -29,66 +29,81 @@ public class SpaceColonizationTree : MonoBehaviour
         {
             System.IO.Directory.CreateDirectory(dirPath);
         }
-        System.IO.File.WriteAllBytes(dirPath + "/R_" + Random.Range(0, 100000) + ".png", bytes);
-        Debug.Log(bytes.Length / 1024 + "Kb was saved as: " + dirPath);
+        System.IO.File.WriteAllBytes(dirPath + "/Heatmap.png", bytes);
         #if UNITY_EDITOR
             UnityEditor.AssetDatabase.Refresh();
         #endif
     }
 
-    public Texture2D GenerateHeatmap(List<Vector2> positions, int width, int height, float falloff)
+    public async Task<Texture2D> GenerateHeatmap(List<Vector2> positions, int width, int height, float falloff)
     {
+        // Create the Texture2D on the main thread
         Texture2D heatmap = new Texture2D(width, height);
         Color32[] pixels = new Color32[width * height];
 
-        // Initialize pixels
-        for (int i = 0; i < pixels.Length; i++)
+        await Task.Run(() => 
         {
-            pixels[i] = new Color32(0, 0, 0, 0);
-        }
+            List<Color32[]> positionPixels = new List<Color32[]>();
+            // Calculate cutoff distance where intensity becomes negligible
+            float cutoffDistance = -Mathf.Log(0.01f) / falloff;
+            float cutoffDistanceSquared = cutoffDistance * cutoffDistance;
 
-        // Calculate cutoff distance where intensity becomes negligible
-        float cutoffDistance = -Mathf.Log(0.01f) / falloff;
-        float cutoffDistanceSquared = cutoffDistance * cutoffDistance;
-
-        // Process each attraction point
-        Parallel.ForEach(positions, pos =>
-        {
-            int startX = Mathf.Max(0, Mathf.FloorToInt(pos.x - cutoffDistance));
-            int endX = Mathf.Min(width, Mathf.CeilToInt(pos.x + cutoffDistance));
-            int startY = Mathf.Max(0, Mathf.FloorToInt(pos.y - cutoffDistance));
-            int endY = Mathf.Min(height, Mathf.CeilToInt(pos.y + cutoffDistance));
-
-            for (int x = startX; x < endX; x++)
+            // Process each attraction point
+            Parallel.ForEach(positions, pos =>
             {
-                float dx = x - pos.x;
-                for (int y = startY; y < endY; y++)
+                Color32[] localPixels = new Color32[width * height];
+                for (int i = 0; i < localPixels.Length; i++)
                 {
-                    float dy = y - pos.y;
-                    float distanceSquared = dx * dx + dy * dy;
+                    localPixels[i] = new Color32(0, 0, 0, 0);
+                }
 
-                    if (distanceSquared <= cutoffDistanceSquared)
+                int startX = Mathf.Max(0, Mathf.FloorToInt(pos.x - cutoffDistance));
+                int endX = Mathf.Min(width, Mathf.CeilToInt(pos.x + cutoffDistance));
+                int startY = Mathf.Max(0, Mathf.FloorToInt(pos.y - cutoffDistance));
+                int endY = Mathf.Min(height, Mathf.CeilToInt(pos.y + cutoffDistance));
+
+                for (int x = startX; x < endX; x++)
+                {
+                    float dx = x - pos.x;
+                    for (int y = startY; y < endY; y++)
                     {
-                        float distance = Mathf.Sqrt(distanceSquared);
-                        float intensity = Mathf.Exp(-falloff * distance);
-                        int index = y * width + x;
-                        lock (pixels)
+                        float dy = y - pos.y;
+                        float distanceSquared = dx * dx + dy * dy;
+                        if (distanceSquared < cutoffDistanceSquared)
                         {
-                            Color32 colorToAdd = new Color(intensity, intensity, intensity, 1.0f);
-                            pixels[index] = new Color32(
-                                (byte)Mathf.Clamp(pixels[index].r + colorToAdd.r, 0, 255),
-                                (byte)Mathf.Clamp(pixels[index].g + colorToAdd.g, 0, 255),
-                                (byte)Mathf.Clamp(pixels[index].b + colorToAdd.b, 0, 255),
-                                (byte)Mathf.Clamp(pixels[index].a + colorToAdd.a, 0, 255)
-                            );
+                            float intensity = Mathf.Exp(-falloff * Mathf.Sqrt(distanceSquared));
+                            int index = y * width + x;
+                            localPixels[index].r = (byte)Mathf.Clamp(localPixels[index].r + intensity * 255, 0, 255);
+                            localPixels[index].g = (byte)Mathf.Clamp(localPixels[index].g + intensity * 255, 0, 255);
+                            localPixels[index].b = (byte)Mathf.Clamp(localPixels[index].b + intensity * 255, 0, 255);
+                            localPixels[index].a = 255;
                         }
                     }
+                }
+
+                lock (positionPixels)
+                {
+                    positionPixels.Add(localPixels);
+                }
+            });
+
+            // Combine all local pixels into the final pixel array
+            foreach (var localPixels in positionPixels)
+            {
+                for (int i = 0; i < pixels.Length; i++)
+                {
+                    pixels[i].r = (byte)Mathf.Clamp(pixels[i].r + localPixels[i].r, 0, 255);
+                    pixels[i].g = (byte)Mathf.Clamp(pixels[i].g + localPixels[i].g, 0, 255);
+                    pixels[i].b = (byte)Mathf.Clamp(pixels[i].b + localPixels[i].b, 0, 255);
+                    pixels[i].a = 255;
                 }
             }
         });
 
+        // Apply the pixels to the heatmap on the main thread
         heatmap.SetPixels32(pixels);
         heatmap.Apply();
+
         return heatmap;
     }
 

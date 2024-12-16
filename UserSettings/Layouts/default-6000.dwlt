@@ -19,7 +19,11 @@ MonoBehaviour:
     width: 1920
     height: 989
   m_ShowMode: 4
+<<<<<<< HEAD
   m_Title: Hierarchy
+=======
+  m_Title: Project
+>>>>>>> SpaceColonization
   m_RootView: {fileID: 2}
   m_MinSize: {x: 875, y: 300}
   m_MaxSize: {x: 10000, y: 10000}
@@ -252,7 +256,7 @@ MonoBehaviour:
   - {fileID: 15}
   - {fileID: 16}
   m_Selected: 1
-  m_LastSelected: 2
+  m_LastSelected: 0
 --- !u!114 &11
 MonoBehaviour:
   m_ObjectHideFlags: 52
@@ -301,7 +305,7 @@ MonoBehaviour:
   m_Pos:
     serializedVersion: 2
     x: 0
-    y: 24
+    y: 79
     width: 362
     height: 527
   m_SerializedDataModeController:
@@ -318,9 +322,13 @@ MonoBehaviour:
   m_SceneHierarchy:
     m_TreeViewState:
       scrollPos: {x: 0, y: 0}
-      m_SelectedIDs: 
+      m_SelectedIDs: f0aa0000
       m_LastClickedID: 0
+<<<<<<< HEAD
       m_ExpandedIDs: befaffff
+=======
+      m_ExpandedIDs: fcfaffff
+>>>>>>> SpaceColonization
       m_RenameOverlay:
         m_UserAcceptedRename: 0
         m_Name: 
@@ -366,8 +374,8 @@ MonoBehaviour:
     m_TextWithWhitespace: "Scene\u200B"
   m_Pos:
     serializedVersion: 2
-    x: 364
-    y: 24
+    x: 363
+    y: 79
     width: 1101
     height: 527
   m_SerializedDataModeController:
@@ -1058,7 +1066,11 @@ MonoBehaviour:
   m_Rotation:
     m_Target: {x: -0.28955713, y: -0.6438496, z: 0.28575903, w: -0.6485923}
     speed: 2
+<<<<<<< HEAD
     m_Value: {x: 0.28955713, y: 0.6438496, z: -0.28575903, w: 0.6485923}
+=======
+    m_Value: {x: -0.28945354, y: -0.6436193, z: 0.2856568, w: -0.64836025}
+>>>>>>> SpaceColonization
   m_Size:
     m_Target: 35.236767
     speed: 2
@@ -1140,7 +1152,7 @@ MonoBehaviour:
     m_SkipHidden: 0
     m_SearchArea: 1
     m_Folders:
-    - Assets
+    - Assets/SpaceColonization1
     m_Globs: []
     m_ProductIds: 
     m_AnyWithAssetOrigin: 0
@@ -1150,16 +1162,22 @@ MonoBehaviour:
   m_ViewMode: 1
   m_StartGridSize: 64
   m_LastFolders:
-  - Assets
+  - Assets/SpaceColonization1
   m_LastFoldersGridSize: -1
   m_LastProjectPath: C:\Users\henry\Desktop\Unity\Procedural Fractal Tree
   m_LockTracker:
     m_IsLocked: 0
   m_FolderTreeState:
     scrollPos: {x: 0, y: 0}
+<<<<<<< HEAD
     m_SelectedIDs: 54a40000
     m_LastClickedID: 42068
     m_ExpandedIDs: 000000005ea40000
+=======
+    m_SelectedIDs: 98a60000
+    m_LastClickedID: 42648
+    m_ExpandedIDs: 0000000058a4000000ca9a3bffffff7f
+>>>>>>> SpaceColonization
     m_RenameOverlay:
       m_UserAcceptedRename: 0
       m_Name: 
@@ -1214,9 +1232,9 @@ MonoBehaviour:
       m_Icon: {fileID: 0}
       m_ResourceFile: 
   m_ListAreaState:
-    m_SelectedInstanceIDs: f4a30000
-    m_LastClickedInstanceID: 41972
-    m_HadKeyboardFocusLastEvent: 0
+    m_SelectedInstanceIDs: f0aa0000
+    m_LastClickedInstanceID: 43760
+    m_HadKeyboardFocusLastEvent: 1
     m_ExpandedInstanceIDs: c623000000000000
     m_RenameOverlay:
       m_UserAcceptedRename: 0
@@ -1268,7 +1286,7 @@ MonoBehaviour:
   m_Pos:
     serializedVersion: 2
     x: 0
-    y: 577
+    y: 632
     width: 1465
     height: 354
   m_SerializedDataModeController:
@@ -1403,8 +1421,8 @@ MonoBehaviour:
     m_TextWithWhitespace: "Inspector\u200B"
   m_Pos:
     serializedVersion: 2
-    x: 1467
-    y: 24
+    x: 1466
+    y: 79
     width: 453
     height: 907
   m_SerializedDataModeController:
